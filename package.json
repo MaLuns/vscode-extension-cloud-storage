@@ -2,7 +2,20 @@
 	"name": "cloud-storage",
 	"displayName": "cloud_storage",
 	"description": "云存储操作助手",
+	"publisher": "mal",
 	"version": "0.0.1",
+	"repository": {
+		"type": "git",
+		"url": "https://github.com/MaLuns/vscode-extension-cloud-storage"
+	},
+	"author": {
+		"name": "白云苍狗"
+	},
+	"keywords": [
+		"图床",
+		"腾讯云",
+		"cloud storage"
+	],
 	"engines": {
 		"vscode": "^1.46.0"
 	},
@@ -12,8 +25,46 @@
 	"activationEvents": [
 		"*"
 	],
+	"icon": "icons/logo128x128.png",
 	"main": "./dist/extension.js",
 	"contributes": {
+		"commands": [
+			{
+				"command": "cloud.storage.createDirectory",
+				"title": "创建文件夹",
+				"icon": "$(file-directory-create)"
+			},
+			{
+				"command": "cloud.storage.uploadFile",
+				"title": "上传文件",
+				"icon": "$(file-add)"
+			},
+			{
+				"command": "cloud.storage.uploadDirectory",
+				"title": "上传文件夹",
+				"icon": "$(file-add)"
+			},
+			{
+				"command": "cloud.storage.deleteFile",
+				"title": "删除文件",
+				"icon": "$(notebook-delete-cell)"
+			},
+			{
+				"command": "cloud.storage.deleteDirectory",
+				"title": "删除文件夹",
+				"icon": "$(notebook-delete-cell)"
+			},
+			{
+				"command": "cloud.storage.copyFileLink",
+				"title": "复制外链",
+				"icon": "$(link)"
+			},
+			{
+				"command": "cloud.storage.treeRefresh",
+				"title": "刷新",
+				"icon": "$(refresh)"
+			}
+		],
 		"configuration": {
 			"title": "Cloud Storage",
 			"properties": {
@@ -34,6 +85,87 @@
 				}
 			}
 		},
+		"menus": {
+			"commandPalette": [
+				{
+					"command": "cloud.storage.copyFileLink",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.createDirectory",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.uploadFile",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.uploadDirectory",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.deleteFile",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.deleteDirectory",
+					"when": "false"
+				},
+				{
+					"command": "cloud.storage.treeRefresh",
+					"when": "false"
+				}
+			],
+			"view/title": [
+				{
+					"command": "cloud.storage.uploadFile",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@1"
+				},
+				{
+					"command": "cloud.storage.createDirectory",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@2"
+				},
+				{
+					"command": "cloud.storage.treeRefresh",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@3"
+				}
+			],
+			"view/item/context": [
+				{
+					"command": "cloud.storage.createDirectory",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@1"
+				},
+				{
+					"command": "cloud.storage.uploadFile",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@2"
+				},
+				{
+					"command": "cloud.storage.uploadDirectory",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@2"
+				},
+				{
+					"command": "cloud.storage.copyFileLink",
+					"when": "view == cloud.storage.list && viewItem == 'file'",
+					"group": "navigation@2"
+				},
+				{
+					"command": "cloud.storage.deleteFile",
+					"when": "view == cloud.storage.list && viewItem == 'file'",
+					"group": "navigation@3"
+				},
+				{
+					"command": "cloud.storage.deleteDirectory",
+					"when": "view == cloud.storage.list && viewItem == 'folder'",
+					"group": "navigation@4"
+				}
+			]
+		},
 		"viewsContainers": {
 			"activitybar": [
 				{
@@ -46,8 +178,9 @@
 		"views": {
 			"cloud-storage-view": [
 				{
-					"name": "cloud storage list",
-					"id": "cloud.storage.list"
+					"name": "文件管理",
+					"id": "cloud.storage.list",
+					"when": "cloud.storage.isShowView"
 				}
 			]
 		}

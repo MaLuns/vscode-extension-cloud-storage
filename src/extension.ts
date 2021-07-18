@@ -1,12 +1,19 @@
 import * as vscode from 'vscode';
+import { isCheck, watchConfig } from './cloud';
+import { registered } from './command';
 
 export function activate(context: vscode.ExtensionContext) {
-	require('./tree');
+	if (isCheck()) {
+		vscode.commands.executeCommand('setContext', 'cloud.storage.isShowView', true);
+		require('./tree');
+	}
 
-	let disposable = vscode.commands.registerCommand('cloud-storage.helloWorld', () => {
-		vscode.window.showInformationMessage('Hello World from cloud_storage!');
-	});
-	context.subscriptions.push(disposable);
+	context.subscriptions.push(
+		...registered,
+		watchConfig
+	);
 }
 
 export function deactivate() { }
+
+

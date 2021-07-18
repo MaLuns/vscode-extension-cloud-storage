@@ -4,5 +4,6 @@ export interface TreeModel extends IListFileInfo {
     id: string,
     pid: string,
     name: string,
+    type: string,
     children?: TreeModel[]
 }

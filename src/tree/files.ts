@@ -1,6 +1,5 @@
 import * as vscode from "vscode";
-import { IListFileInfo } from "@cloudbase/manager-node/types/interfaces";
-import { getListDirectoryFiles } from '../api';
+import { storage } from '../cloud';
 import { TreeModel } from "../models";
 
 export class FileTreeItem extends vscode.TreeItem {
@@ -8,7 +7,7 @@ export class FileTreeItem extends vscode.TreeItem {
         public readonly label: string,
         public readonly collapsibleState: vscode.TreeItemCollapsibleState,
         public command?: vscode.Command,
-        public element?: any
+        public element?: TreeModel
     ) {
         super(label, collapsibleState);
     }
@@ -18,12 +17,15 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
     private _onDidChangeTreeData: vscode.EventEmitter<FileTreeItem | undefined | void> = new vscode.EventEmitter<FileTreeItem | undefined | void>();
     readonly onDidChangeTreeData: vscode.Event<FileTreeItem | undefined | void> = this._onDidChangeTreeData.event;
 
-    public isLoading = false;
     private data: TreeModel[] = [];
 
     constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
         this.onDidChangeTreeData = this._onDidChangeTreeData.event;
+    }
+
+    refresh() {
+        this._onDidChangeTreeData.fire();
     }
 
     getTreeItem(element: FileTreeItem): vscode.TreeItem | Thenable<vscode.TreeItem> {
@@ -32,9 +34,10 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
 
     async getChildren(element?: FileTreeItem): Promise<FileTreeItem[]> {
         if (element) {
-            return element.element.children.map((item: TreeModel) => this.createTreeItem(item));
+            return element.element.children.sort(this._sort)
+                .map((item: TreeModel) => this.createTreeItem(item));
         } else {
-            let files = await getListDirectoryFiles() as TreeModel[];
+            let files = await storage.listDirectoryFiles('') as TreeModel[];
             this.data = this.arrayToTree(files);
             return this.data.map((item: TreeModel): FileTreeItem => this.createTreeItem(item));
         }
@@ -43,20 +46,29 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
     createTreeItem(item: TreeModel): FileTreeItem {
         let treeItem = new FileTreeItem(
             item.name,
-            item.Size === '0' ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None,
+            item.type === 'folder' ? vscode.TreeItemCollapsibleState.Collapsed : vscode.TreeItemCollapsibleState.None
         );
         treeItem.element = item;
-        treeItem.iconPath = item.Size === '0' ? new vscode.ThemeIcon('folder') : new vscode.ThemeIcon('file');
+        treeItem.contextValue = item.type;
+        treeItem.iconPath = new vscode.ThemeIcon(item.type);
+        if (item.type === 'file') {
+            treeItem.command = {
+                command: "cloud.storage.previewView",
+                title: "text",
+                arguments: [item]
+            };
+        }
         return treeItem;
     }
 
     arrayToTree(data: TreeModel[]) {
-        const result = [];
+        const result: TreeModel[] = [];
         const itemMap: any = {};
         for (const item of data) {
             let keys = item.Key.split('/').filter((item: string) => item !== '');
             item.name = keys.pop() || '';
             item.pid = keys.join('');
+            item.type = item.Key.endsWith('/') ? 'folder' : 'file';
             item.id = item.Key.replace(/\//g, '');
             itemMap[item.id] = {
                 ...item,
@@ -78,8 +90,17 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
                 itemMap[pid].children.push(treeItem);
             }
         }
-        return result;
+        return result.sort(this._sort);
     }
 
+    _sort(a: TreeModel, b: TreeModel) {
+        if (a.type === b.type) {
+            return 0;
+        } else if (a.type === 'folder') {
+            return -1;
+        } else {
+            return 1;
+        }
+    }
 }
 
