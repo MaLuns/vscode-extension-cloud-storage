@@ -1,4 +1,4 @@
-# cloud-storage  腾讯云图床
+# cloud-storage
 一款 VSCode 插件，在 VSCode 中上传图片到腾讯云云存储。
 
 ### 功能
