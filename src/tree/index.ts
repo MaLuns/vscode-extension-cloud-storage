@@ -1,4 +1,3 @@
-
 import vscode = require('vscode');
 import { FileTree } from './files';
 
