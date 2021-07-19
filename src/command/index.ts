@@ -1,5 +1,5 @@
 import * as vscode from 'vscode';
-import { createDirectory, uploadFile, deleteFile, deleteDirectory, copyFileLink, previewView, uploadDirectory } from './opt';
+import { createDirectory, uploadFile, deleteFile, deleteDirectory, copyFileLink, previewView, uploadDirectory, pasteImage } from './opt';
 import { treeRefresh } from '../tree';
 
 const commands = {
@@ -10,6 +10,7 @@ const commands = {
     copyFileLink,
     previewView,
     uploadDirectory,
+    pasteImage,
     treeRefresh
 };
 

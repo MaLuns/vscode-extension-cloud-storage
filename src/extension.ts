@@ -7,6 +7,7 @@ export function activate(context: vscode.ExtensionContext) {
 		vscode.commands.executeCommand('setContext', 'cloud.storage.isShowView', true);
 		require('./tree');
 	}
+	vscode.window.createQuickPick();
 
 	context.subscriptions.push(
 		...registered,
@@ -15,3 +16,4 @@ export function activate(context: vscode.ExtensionContext) {
 }
 
 export function deactivate() { }
+

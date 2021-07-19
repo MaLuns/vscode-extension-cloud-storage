@@ -1,9 +1,12 @@
-import { workspace } from 'vscode';
+/* eslint-disable @typescript-eslint/naming-convention */
+import { env, workspace } from 'vscode';
+import COS = require("cos-nodejs-sdk-v5");
 import cloudBase = require("@cloudbase/manager-node");
+import Util = require('util');
 
 export const configKeys = ['cloud.storage.secretId', 'cloud.storage.secretKey', 'cloud.storage.envId'];
 
-export const { storage } = cloudBase.init({
+export const { storage, currentEnvironment } = cloudBase.init({
     secretId: workspace.getConfiguration().get(configKeys[0]),
     secretKey: workspace.getConfiguration().get(configKeys[1]),
     envId: workspace.getConfiguration().get(configKeys[2])
@@ -27,3 +30,40 @@ export const watchConfig = (() => {
     });
 
 })();
+
+// 获取COS
+const getCos = (parallel = 3) => {
+    let { secretId, secretKey, token, proxy } = currentEnvironment().getAuthConfig();
+    const cosProxy = process.env.TCB_COS_PROXY;
+    return new COS({
+        FileParallelLimit: parallel,
+        SecretId: secretId,
+        SecretKey: secretKey,
+        Proxy: cosProxy || proxy,
+        SecurityToken: token
+    });
+};
+
+// 文件上传
+const uploadFile = async ({ cloudPath, fileStream, onProgress }: { cloudPath: string, fileStream: Buffer, onProgress: any }) => {
+    let cos = getCos();
+    const putObject = Util.promisify(cos.putObject).bind(cos);
+
+    const envConfig = currentEnvironment().lazyEnvironmentConfig;
+    const storageConfig = envConfig?.Storages?.[0];
+    const { Region, Bucket } = storageConfig;
+
+    const meta = await storage.getUploadMetadata(cloudPath);
+    const cosFileId = meta.cosFileId;
+
+    return await putObject({
+        onProgress,
+        Bucket,
+        Region,
+        Key: cloudPath,
+        StorageClass: 'STANDARD',
+        ContentLength: fileStream.byteLength,
+        Body: fileStream,
+        'x-cos-meta-fileid': cosFileId
+    });
+};

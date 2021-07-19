@@ -4,6 +4,7 @@ import { fileTree, fileTreeView } from '../tree';
 import path = require('path');
 import { FileTreeItem } from '../tree/files';
 import { TreeModel } from '../models';
+import { getPasteImage, getTmpFolder } from '../utils';
 
 /**
  * 获取树 当前选中项的 路径
@@ -144,4 +145,38 @@ export const previewView = async (item: TreeModel) => {
         });
     } catch (error) {
     }
+};
+
+// 粘贴图片
+export const pasteImage = async () => {
+    getPasteImage(path.join(getTmpFolder(), `pic_${new Date().getTime()}.png`)).then(res => {
+        let imgs = res.filter(img => ['.jpg', '.jpeg', '.gif', '.bmp', '.png', '.webp', '.svg'].find(ext => img.endsWith(ext)));
+        if (imgs.length > 0) {
+
+            let bool = vscode.workspace.getConfiguration().get('cloud.storage.pasteImage');
+            if (bool) { 
+               
+            }
+            let files = imgs.map(item => {
+                let fileName = path.basename(item);
+                return {
+                    localPath: item,
+                    cloudPath: fileName,
+                };
+            });
+
+            storage.uploadFiles({
+                files,
+                onFileFinish(error: Error, res: any, fileData: any) {
+                    if (error) { return vscode.window.showErrorMessage(error.stack); }
+                    if (res.statusCode === 200) {
+                        let fileName = path.basename(fileData.FilePath);
+                        vscode.window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
+                    }
+                }
+            }).then(() => {
+                fileTree.refresh();
+            });
+        }
+    });
 };

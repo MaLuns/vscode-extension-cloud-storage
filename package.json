@@ -25,7 +25,7 @@
 	"activationEvents": [
 		"*"
 	],
-	"icon": "icons/logo128x128.png",
+	"icon": "asserts/icons/logo128x128.png",
 	"main": "./dist/extension.js",
 	"contributes": {
 		"commands": [
@@ -60,6 +60,11 @@
 				"icon": "$(link)"
 			},
 			{
+				"command": "cloud.storage.pasteImage",
+				"title": "粘贴图片",
+				"icon": "$(link)"
+			},
+			{
 				"command": "cloud.storage.treeRefresh",
 				"title": "刷新",
 				"icon": "$(refresh)"
@@ -82,6 +87,11 @@
 					"type": "string",
 					"default": "",
 					"description": "云开发环境ID"
+				},
+				"cloud.storage.pasteImage": {
+					"type": "boolean",
+					"default": false,
+					"description": "粘贴图片时选择云存储路径"
 				}
 			}
 		},
@@ -171,7 +181,7 @@
 				{
 					"id": "cloud-storage-view",
 					"title": "云存储",
-					"icon": "icons/logo.svg"
+					"icon": "asserts/icons/logo.svg"
 				}
 			]
 		},
