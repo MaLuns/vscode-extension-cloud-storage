@@ -154,22 +154,26 @@ export const pasteImage = async (fileTreeItem: FileTreeItem) => {
             cloudPath = await window.showQuickPick(['', ...fileTree.folder]) || '';
         }
 
+        // 上传
         await storage.uploadFiles({
             files: imgs.map(item => ({ localPath: item, cloudPath: cloudPath + path.basename(item) })),
             onFileFinish(error: Error, res: any, fileData: any) {
                 if (error) { return window.showErrorMessage(error.stack); }
                 if (res.statusCode === 200) {
+
                     let fileName = path.basename(fileData.FilePath);
                     window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
                 }
             }
         });
-        fileTree.refresh();
+
+        // 清除临时文件
         if (imgs[0].indexOf(tmpPath) > -1) {
             fs.rmdir(tmpPath, { recursive: true }, (err) => {
                 console.log(err);
             });
         }
+        fileTree.refresh();
     } else {
         window.showWarningMessage('未找到剪贴板文件');
     }

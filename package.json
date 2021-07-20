@@ -93,7 +93,12 @@
 				"cloud.storage.pasteImage": {
 					"type": "boolean",
 					"default": false,
-					"description": "粘贴图片时选择云存储路径"
+					"description": "上传剪贴板图片时选择云存储路径"
+				},
+				"cloud.storage.appendMDLink": {
+					"type": "boolean",
+					"default": true,
+					"description": "上传剪贴板图片后插入到MarkDown光标处"
 				}
 			}
 		},
