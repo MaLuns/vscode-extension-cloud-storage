@@ -1,9 +1,7 @@
 # Change Log
 
-All notable changes to the "cloud-storage" extension will be documented in this file.
+## 0.0.3
+- 更新使用文档描述
 
-Check [Keep a Changelog](http://keepachangelog.com/) for recommendations on how to structure this file.
-
-## [Unreleased]
-
-- Initial release
+## 0.0.2
+- 实现基本功能
