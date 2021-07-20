@@ -1,4 +1,5 @@
 import path = require('path');
+import fs = require('fs');
 import { commands, env, Uri, window, workspace } from 'vscode';
 import { storage } from '../cloud';
 import { fileTree, fileTreeView } from '../tree';
@@ -140,7 +141,8 @@ export const previewView = async (item: TreeModel) => {
 
 // 获取剪贴板图片信息
 export const pasteImage = async (fileTreeItem: FileTreeItem) => {
-    let res = await getPasteImage(path.join(getTmpFolder(), `pic_${new Date().getTime()}.png`));
+    let tmpPath = getTmpFolder();
+    let res = await getPasteImage(path.join(tmpPath, `pic_${new Date().getTime()}.png`));
     let imgs = res.filter(img => ['.jpg', '.jpeg', '.gif', '.bmp', '.png', '.webp', '.svg'].find(ext => img.endsWith(ext)));
 
     if (imgs.length > 0) {
@@ -149,7 +151,7 @@ export const pasteImage = async (fileTreeItem: FileTreeItem) => {
         if (fileTreeItem) {
             cloudPath = getTreeSelectionPathOrParentPath({ fileTreeItem });
         } else if (bool && fileTree.folder.length) {
-            cloudPath = await window.showQuickPick(fileTree.folder) || '';
+            cloudPath = await window.showQuickPick(['', ...fileTree.folder]) || '';
         }
 
         await storage.uploadFiles({
@@ -163,6 +165,11 @@ export const pasteImage = async (fileTreeItem: FileTreeItem) => {
             }
         });
         fileTree.refresh();
+        if (imgs[0].indexOf(tmpPath) > -1) {
+            fs.rmdir(tmpPath, { recursive: true }, (err) => {
+                console.log(err);
+            });
+        }
     } else {
         window.showWarningMessage('未找到剪贴板文件');
     }
