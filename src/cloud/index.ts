@@ -1,31 +1,43 @@
 /* eslint-disable @typescript-eslint/naming-convention */
-import { env, workspace } from 'vscode';
+import { commands, workspace } from 'vscode';
 import COS = require("cos-nodejs-sdk-v5");
 import cloudBase = require("@cloudbase/manager-node");
 import Util = require('util');
 
+// 配置
 export const configKeys = ['cloud.storage.secretId', 'cloud.storage.secretKey', 'cloud.storage.envId'];
+export const getConfigValue = () => configKeys.map(key => workspace.getConfiguration().get(key));
 
-export const { storage, currentEnvironment } = cloudBase.init({
-    secretId: workspace.getConfiguration().get(configKeys[0]),
-    secretKey: workspace.getConfiguration().get(configKeys[1]),
-    envId: workspace.getConfiguration().get(configKeys[2])
-});
+// 初始化
+const init = (): cloudBase => {
+    return new cloudBase({
+        secretId: workspace.getConfiguration().get(configKeys[0]),
+        secretKey: workspace.getConfiguration().get(configKeys[1]),
+        envId: workspace.getConfiguration().get(configKeys[2])
+    });
+};
+
+// 导出 云存储SDK
+export let { storage, currentEnvironment } = init();
 
 // 校验配置是否不为空
-export const isCheck = () => configKeys.map(key => workspace.getConfiguration().get(key)).filter(Boolean).length;
+export const isCheck = () => getConfigValue().filter(Boolean).length === configKeys.length;
 
 // 监听配置变化
 export const watchConfig = (() => {
-    let oldVal = configKeys.map(key => workspace.getConfiguration().get(key));
+    let oldVal = getConfigValue();
 
     return workspace.onDidChangeConfiguration(() => {
-        const newVal = configKeys.map(key => workspace.getConfiguration().get(key));
+        const newVal = getConfigValue();
         if (oldVal[0] !== newVal[0] || oldVal[1] !== newVal[1] || oldVal[2] !== newVal[2]) {
             oldVal = newVal;
-            if (isCheck()) {
-                console.log(newVal);
+            let isShowView = isCheck();
+            if (isShowView) {
+                let cb = init();
+                storage = cb.storage;
+                currentEnvironment = cb.currentEnvironment;
             }
+            commands.executeCommand('setContext', 'cloud.storage.isShowView', isShowView);
         }
     });
 

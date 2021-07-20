@@ -18,6 +18,7 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
     readonly onDidChangeTreeData: vscode.Event<FileTreeItem | undefined | void> = this._onDidChangeTreeData.event;
 
     private data: TreeModel[] = [];
+    public folder: string[] = [];
 
     constructor() {
         this._onDidChangeTreeData = new vscode.EventEmitter();
@@ -38,6 +39,7 @@ export class FileTree implements vscode.TreeDataProvider<FileTreeItem> {
                 .map((item: TreeModel) => this.createTreeItem(item));
         } else {
             let files = await storage.listDirectoryFiles('') as TreeModel[];
+            this.folder = files.filter(item => item.Key.endsWith('/')).map(item => item.Key);
             this.data = this.arrayToTree(files);
             return this.data.map((item: TreeModel): FileTreeItem => this.createTreeItem(item));
         }

@@ -1,7 +1,7 @@
-import * as vscode from 'vscode';
+import path = require('path');
+import { commands, env, Uri, window, workspace } from 'vscode';
 import { storage } from '../cloud';
 import { fileTree, fileTreeView } from '../tree';
-import path = require('path');
 import { FileTreeItem } from '../tree/files';
 import { TreeModel } from '../models';
 import { getPasteImage, getTmpFolder } from '../utils';
@@ -34,7 +34,7 @@ export const getTreeSelectionPathOrParentPath = ({ fileTreeItem, isParent = true
 
 // 创建文件夹
 export const createDirectory = async (fileTreeItem: FileTreeItem | undefined) => {
-    let directoryName = await vscode.window.showInputBox({
+    let directoryName = await window.showInputBox({
         prompt: '请输入文件夹名',
         placeHolder: "请输入文件夹名",
         validateInput(value) {
@@ -45,65 +45,59 @@ export const createDirectory = async (fileTreeItem: FileTreeItem | undefined) =>
     });
     if (directoryName) {
         let cloudPath = getTreeSelectionPathOrParentPath({ fileTreeItem }) + directoryName;
-        storage.createCloudDirectroy(cloudPath).then(res => {
-            fileTree.refresh();
-        });
+        await storage.createCloudDirectroy(cloudPath);
+        fileTree.refresh();
     }
 };
 
 // 上传文件
 export const uploadFile = async (fileTreeItem: FileTreeItem | undefined) => {
-    let uri = await vscode.window.showOpenDialog({
+    let uri = await window.showOpenDialog({
         canSelectMany: true,
         title: "选择上传文件",
         openLabel: "上传文件"
     });
     if (uri) {
-        let files = uri.map(item => {
-            let fileName = path.basename(item.path);
-            return {
-                localPath: item.path,
-                cloudPath: getTreeSelectionPathOrParentPath({ fileTreeItem }) + fileName,
-            };
-        });
-        storage.uploadFiles({
+        let files = uri.map(item => ({
+            localPath: item.fsPath,
+            cloudPath: getTreeSelectionPathOrParentPath({ fileTreeItem }) + path.basename(item.fsPath),
+        }));
+
+        await storage.uploadFiles({
             files,
-            /* onProgress(progressData) {
-                console.log(progressData);
-            }, */
             onFileFinish(error: Error, res: any, fileData: any) {
-                if (error) { return vscode.window.showErrorMessage(error.stack); }
+                if (error) { return window.showErrorMessage(error.stack); }
                 if (res.statusCode === 200) {
                     let fileName = path.basename(fileData.FilePath);
-                    vscode.window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
+                    window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
                 }
             }
-        }).then(res => {
-            fileTree.refresh();
         });
+        fileTree.refresh();
     }
 };
 
 // 上传文件夹
 export const uploadDirectory = async (fileTreeItem: FileTreeItem) => {
-    let uri = await vscode.window.showOpenDialog({
+    let uri = await window.showOpenDialog({
         canSelectFiles: false,
         canSelectFolders: true,
         title: "选择上传文件夹",
         openLabel: "上传文件夹"
     });
     if (uri) {
-        let dirPath = uri[0].path;
-        let dirName = dirPath.substr(dirPath.lastIndexOf(path.sep) + 1, dirPath.length);
-        storage.createCloudDirectroy(getTreeSelectionPathOrParentPath() + dirName).then(() => {
+        let localPath = uri[0].fsPath;
+        let cloudPath = getTreeSelectionPathOrParentPath({ fileTreeItem }) + localPath.substr(localPath.lastIndexOf(path.sep) + 1, localPath.length);
+
+        storage.createCloudDirectroy(cloudPath).then(() => {
             storage.uploadDirectory({
-                localPath: dirPath,
-                cloudPath: getTreeSelectionPathOrParentPath() + dirName,
+                localPath,
+                cloudPath,
                 onFileFinish(error: Error, res: any, fileData: any) {
-                    if (error) { return vscode.window.showErrorMessage(error.stack); }
+                    if (error) { return window.showErrorMessage(error.stack); }
                     if (res.statusCode === 200) {
                         let fileName = path.basename(fileData.FilePath);
-                        vscode.window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
+                        window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
                     }
                 }
             }).then(() => fileTree.refresh());
@@ -113,24 +107,21 @@ export const uploadDirectory = async (fileTreeItem: FileTreeItem) => {
 
 // 删除文件
 export const deleteFile = async (item: FileTreeItem) => {
-    storage.deleteFile([item.element.Key]).then(res => {
-        fileTree.refresh();
-    });
+    await storage.deleteFile([item.element.Key]);
+    fileTree.refresh();
 };
 
 // 删除文件夹
 export const deleteDirectory = async (item: FileTreeItem) => {
-    storage.deleteDirectory(item.element.Key).then(res => {
-        fileTree.refresh();
-    });
+    await storage.deleteDirectory(item.element.Key);
+    fileTree.refresh();
 };
 
 // 复制连接
 export const copyFileLink = async (item: FileTreeItem) => {
-    // storage.getUploadMetadata(item.element.Key).then(console.log);
     storage.getTemporaryUrl([item.element.Key]).then(res => {
-        vscode.env.clipboard.writeText(res[0].url).then(() => {
-            vscode.window.showInformationMessage('连接已复制');
+        env.clipboard.writeText(res[0].url).then(() => {
+            window.showInformationMessage('外链已复制');
         });
     });
 };
@@ -138,45 +129,41 @@ export const copyFileLink = async (item: FileTreeItem) => {
 // 预览图片
 export const previewView = async (item: TreeModel) => {
     let res = await storage.getTemporaryUrl([item.Key]);
-    let uri = vscode.Uri.parse(res[0].url);
+    let uri = Uri.parse(res[0].url);
     try {
-        vscode.commands.executeCommand("vscode.open", uri, {
+        commands.executeCommand("vscode.open", uri, {
             preview: false,
         });
     } catch (error) {
     }
 };
 
-// 粘贴图片
-export const pasteImage = async () => {
-    getPasteImage(path.join(getTmpFolder(), `pic_${new Date().getTime()}.png`)).then(res => {
-        let imgs = res.filter(img => ['.jpg', '.jpeg', '.gif', '.bmp', '.png', '.webp', '.svg'].find(ext => img.endsWith(ext)));
-        if (imgs.length > 0) {
+// 获取剪贴板图片信息
+export const pasteImage = async (fileTreeItem: FileTreeItem) => {
+    let res = await getPasteImage(path.join(getTmpFolder(), `pic_${new Date().getTime()}.png`));
+    let imgs = res.filter(img => ['.jpg', '.jpeg', '.gif', '.bmp', '.png', '.webp', '.svg'].find(ext => img.endsWith(ext)));
 
-            let bool = vscode.workspace.getConfiguration().get('cloud.storage.pasteImage');
-            if (bool) { 
-               
-            }
-            let files = imgs.map(item => {
-                let fileName = path.basename(item);
-                return {
-                    localPath: item,
-                    cloudPath: fileName,
-                };
-            });
-
-            storage.uploadFiles({
-                files,
-                onFileFinish(error: Error, res: any, fileData: any) {
-                    if (error) { return vscode.window.showErrorMessage(error.stack); }
-                    if (res.statusCode === 200) {
-                        let fileName = path.basename(fileData.FilePath);
-                        vscode.window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
-                    }
-                }
-            }).then(() => {
-                fileTree.refresh();
-            });
+    if (imgs.length > 0) {
+        let bool = workspace.getConfiguration().get('cloud.storage.pasteImage');
+        let cloudPath = '';
+        if (fileTreeItem) {
+            cloudPath = getTreeSelectionPathOrParentPath({ fileTreeItem });
+        } else if (bool && fileTree.folder.length) {
+            cloudPath = await window.showQuickPick(fileTree.folder) || '';
         }
-    });
+
+        await storage.uploadFiles({
+            files: imgs.map(item => ({ localPath: item, cloudPath: cloudPath + path.basename(item) })),
+            onFileFinish(error: Error, res: any, fileData: any) {
+                if (error) { return window.showErrorMessage(error.stack); }
+                if (res.statusCode === 200) {
+                    let fileName = path.basename(fileData.FilePath);
+                    window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
+                }
+            }
+        });
+        fileTree.refresh();
+    } else {
+        window.showWarningMessage('未找到剪贴板文件');
+    }
 };

@@ -14,6 +14,7 @@
 	"keywords": [
 		"图床",
 		"腾讯云",
+		"cos",
 		"cloud storage"
 	],
 	"engines": {
@@ -95,6 +96,14 @@
 				}
 			}
 		},
+		"keybindings": [
+			{
+				"command": "cloud.storage.pasteImage",
+				"key": "shift+alt+v",
+				"mac": "cmd+alt+v",
+				"when": "cloud.storage.isShowView"
+			}
+		],
 		"menus": {
 			"commandPalette": [
 				{
@@ -124,6 +133,10 @@
 				{
 					"command": "cloud.storage.treeRefresh",
 					"when": "false"
+				},
+				{
+					"command": "cloud.storage.pasteImage",
+					"when": "cloud.storage.isShowView"
 				}
 			],
 			"view/title": [
@@ -157,22 +170,27 @@
 				{
 					"command": "cloud.storage.uploadDirectory",
 					"when": "view == cloud.storage.list",
-					"group": "navigation@2"
+					"group": "navigation@3"
+				},
+				{
+					"command": "cloud.storage.pasteImage",
+					"when": "view == cloud.storage.list",
+					"group": "navigation@3"
 				},
 				{
 					"command": "cloud.storage.copyFileLink",
 					"when": "view == cloud.storage.list && viewItem == 'file'",
-					"group": "navigation@2"
+					"group": "navigation@4"
 				},
 				{
 					"command": "cloud.storage.deleteFile",
 					"when": "view == cloud.storage.list && viewItem == 'file'",
-					"group": "navigation@3"
+					"group": "navigation@5"
 				},
 				{
 					"command": "cloud.storage.deleteDirectory",
 					"when": "view == cloud.storage.list && viewItem == 'folder'",
-					"group": "navigation@4"
+					"group": "navigation@6"
 				}
 			]
 		},
@@ -181,7 +199,8 @@
 				{
 					"id": "cloud-storage-view",
 					"title": "云存储",
-					"icon": "asserts/icons/logo.svg"
+					"icon": "asserts/icons/logo.svg",
+					"when": "cloud.storage.isShowView"
 				}
 			]
 		},
