@@ -1,7 +1,7 @@
 {
 	"name": "cloud-storage",
-	"displayName": "cloud_storage",
-	"description": "云存储操作助手",
+	"displayName": "cloud storage",
+	"description": "在 VSCode 中上传图片到腾讯云云存储",
 	"publisher": "mal",
 	"version": "0.0.1",
 	"repository": {
@@ -14,6 +14,7 @@
 	"keywords": [
 		"图床",
 		"腾讯云",
+		"云存储",
 		"cos",
 		"cloud storage"
 	],
