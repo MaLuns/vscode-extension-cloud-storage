@@ -3,7 +3,7 @@
 	"displayName": "cloud storage",
 	"description": "在 VSCode 中上传图片到腾讯云云存储",
 	"publisher": "mal",
-	"version": "0.0.1",
+	"version": "0.0.2",
 	"repository": {
 		"type": "git",
 		"url": "https://github.com/MaLuns/vscode-extension-cloud-storage"
