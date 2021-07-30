@@ -39,7 +39,7 @@ export const createDirectory = async (fileTreeItem: FileTreeItem | undefined) =>
         prompt: '请输入文件夹名',
         placeHolder: "请输入文件夹名",
         validateInput(value) {
-            if (!/^[A-Za-z][a-zA-Z0-9]*$/.test(value)) {
+            if (!/^[A-Za-z][a-zA-Z0-9_]*$/.test(value)) {
                 return '文件夹名由英文字母组成';
             }
         }
