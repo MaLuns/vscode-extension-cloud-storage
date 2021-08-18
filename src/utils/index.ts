@@ -106,3 +106,18 @@ export const getTmpFolder = () => {
     if (!fs.existsSync(savePath)) { fs.mkdirSync(savePath); }
     return savePath;
 };
+
+// 在光标出插入图片
+export const appendMDLink = (url: string) => {
+    const currentEditor = vscode.window.activeTextEditor;
+    if (currentEditor && currentEditor.selection && ['markdown'].includes(currentEditor.document.languageId)) {
+        currentEditor.edit((editBuilder) => {
+            //let { line, character } = currentEditor.selection.active;
+            editBuilder.insert(currentEditor.selection.active, `![插入图片](${url})`);
+            /* currentEditor.selection = new vscode.Selection(
+                new vscode.Position(line, character + 2),
+                new vscode.Position(line, character + 6)
+            ); */
+        });
+    }
+};

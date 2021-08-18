@@ -5,7 +5,7 @@ import { storage } from '../cloud';
 import { fileTree, fileTreeView } from '../tree';
 import { FileTreeItem } from '../tree/files';
 import { TreeModel } from '../models';
-import { getPasteImage, getTmpFolder } from '../utils';
+import { appendMDLink, getPasteImage, getTmpFolder } from '../utils';
 
 /**
  * 获取树 当前选中项的 路径
@@ -160,9 +160,11 @@ export const pasteImage = async (fileTreeItem: FileTreeItem) => {
             onFileFinish(error: Error, res: any, fileData: any) {
                 if (error) { return window.showErrorMessage(error.stack); }
                 if (res.statusCode === 200) {
-
                     let fileName = path.basename(fileData.FilePath);
-                    window.showInformationMessage('文件 ' + fileName + ' 上传成功');;
+                    window.showInformationMessage('文件 ' + fileName + ' 上传成功');
+                    storage.getTemporaryUrl([fileData.Key]).then(res => {
+                        appendMDLink(res[0].url);
+                    });
                 }
             }
         });

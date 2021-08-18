@@ -7,6 +7,8 @@ import Util = require('util');
 // 配置
 export const configKeys = ['cloud.storage.secretId', 'cloud.storage.secretKey', 'cloud.storage.envId'];
 export const getConfigValue = () => configKeys.map(key => workspace.getConfiguration().get(key));
+// 校验配置是否不为空
+export const isCheck = () => getConfigValue().filter(Boolean).length === configKeys.length;
 
 // 初始化
 const init = (): cloudBase => {
@@ -19,9 +21,6 @@ const init = (): cloudBase => {
 
 // 导出 云存储SDK
 export let { storage, currentEnvironment } = init();
-
-// 校验配置是否不为空
-export const isCheck = () => getConfigValue().filter(Boolean).length === configKeys.length;
 
 // 监听配置变化
 export const watchConfig = (() => {
